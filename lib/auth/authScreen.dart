@@ -115,7 +115,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     onPressed: enableButton ? getOtp:null,
                     child: Text("Get Otp"))),
 
-            SizedBox(height: 30,)
+            SizedBox(height: 30,),
+            Text("Hello World")
 
           ],
         ),
