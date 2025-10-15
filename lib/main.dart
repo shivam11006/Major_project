@@ -1,11 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:majorproject/Screen/splashScreen.dart';
+import 'Authen/PhoneNumberScreen.dart';
+import 'DealerAuth/HomeScreen.dart';
+import 'DealerAuth/signup_screen.dart';
+import 'Screen/splashScreen.dart';
 import 'firebase_options.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();   // ✅ Add this line
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,7 +28,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.mulishTextTheme(),
       ),
-      home: SplashScreen(),
+      home: DearHomeScreen(),
     );
   }
 }

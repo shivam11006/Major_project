@@ -1,18 +1,60 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:majorproject/HomeScreen/homeScreen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  // 1. Add final variables to hold the user data
-  final String userName;
-  final String userUsername;
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({Key? key}) : super(key: key);
 
-  // 2. Add constructor to require user data
-  const ProfileScreen({
-    Key? key,
-    this.userName = 'Kishan Name', // Default value for testing
-    this.userUsername = '@username', // Default value for testing
-  }) : super(key: key);
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String DealerName = '';
+  String DealerId = '';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDealerData();
+  }
+
+  Future<void> fetchDealerData() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Fetch data from Firestore (Dealer collection)
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('Dealer')
+          .doc(currentUser.email)
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          DealerName = snapshot['Name'] ?? '*';
+          DealerId = snapshot['UserName'] ?? '@unknown';
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching dealer data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +77,9 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       extendBodyBehindAppBar: true,
-      body: SingleChildScrollView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
+          : SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -50,31 +94,29 @@ class ProfileScreen extends StatelessWidget {
             ),
             // Main Card
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Container(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xff122129),
+                  color: const Color(0xff122129),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Profile row
+                    // Profile Row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Profile Picture
                         Container(
                           width: screenWidth * 0.2,
                           height: screenWidth * 0.2,
                           decoration: BoxDecoration(
-                            color: Color(0xffa8c6db),
+                            color: const Color(0xffa8c6db),
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        SizedBox(width: 16),
-                        // Profile info
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,8 +125,7 @@ class ProfileScreen extends StatelessWidget {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      // 3. Use the dynamic userName
-                                      userName,
+                                      DealerName,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: screenWidth * 0.06,
@@ -93,7 +134,7 @@ class ProfileScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Image.asset(
                                     'assets/farmer_badge.png',
                                     width: screenWidth * 0.06,
@@ -101,10 +142,9 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                // 4. Use the dynamic userUsername
-                                userUsername,
+                                DealerId,
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: screenWidth * 0.04,
@@ -115,8 +155,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    // Bio
+                    const SizedBox(height: 16),
                     Text(
                       'Bio',
                       style: TextStyle(
@@ -125,12 +164,11 @@ class ProfileScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
-                    _buildBioPoint('Hello! I\'m Farmer', screenWidth),
-                    _buildBioPoint('I grows Falana things', screenWidth),
-                    _buildBioPoint('I do hen ten... 👋', screenWidth),
-                    SizedBox(height: 16),
-                    // Stats
+                    const SizedBox(height: 8),
+                    _buildBioPoint('Hello! I\'m a dealer', screenWidth),
+                    _buildBioPoint('Providing quality products', screenWidth),
+                    _buildBioPoint('Glad to connect with farmers 👋', screenWidth),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -139,15 +177,14 @@ class ProfileScreen extends StatelessWidget {
                         _buildStatColumn('127', 'Connections', screenWidth),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    // Buttons
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xff4B8B3B),
+                              backgroundColor: const Color(0xff4B8B3B),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -166,32 +203,21 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SizedBox(width: 16),
+                        const SizedBox(width: 16),
                         Container(
                           height: screenHeight * 0.065,
                           width: screenHeight * 0.065,
                           decoration: BoxDecoration(
-                            color: Color(0xff4B8B3B),
+                            color: const Color(0xff4B8B3B),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(Icons.chat_bubble_outline, color: Colors.white),
+                          child: const Icon(Icons.chat_bubble_outline,
+                              color: Colors.white),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ),
-            ),
-            // Bottom tabs
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildTab('Products', screenWidth),
-                  _buildTab('Blogs', screenWidth),
-                  _buildTab('Post', screenWidth),
-                ],
               ),
             ),
           ],
@@ -205,8 +231,8 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(Icons.circle, size: screenWidth * 0.02, color: Color(0xff4B8B3B)),
-          SizedBox(width: 8),
+          Icon(Icons.circle, size: screenWidth * 0.02, color: const Color(0xff4B8B3B)),
+          const SizedBox(width: 8),
           Flexible(
             child: Text(
               text,
@@ -237,16 +263,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTab(String text, double screenWidth) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Colors.grey,
-        fontSize: screenWidth * 0.045,
-      ),
     );
   }
 }

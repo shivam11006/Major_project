@@ -1,7 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import '../HomeScreen/homeScreen.dart';
+import '../Profile/profile.dart';
 import 'DealerProfileScreen.dart';
+import 'HomeScreen.dart';
 import 'PostScreen.dart';
 
 class AdminPanel extends StatefulWidget {
@@ -13,9 +15,9 @@ class _AdminPanelState extends State<AdminPanel> {
   int index = 1;
 
   final screens = [
-    HomeScreen(),
+    DearHomeScreen(),
     PostScreen(),
-    DealerProfileScreen()
+    ProfileScreen()
   ];
 
   final items = <Widget>[

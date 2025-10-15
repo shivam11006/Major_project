@@ -56,6 +56,4 @@ class UiHelper {
       )), child: Center(child: Text(buttonname,style: TextStyle(fontSize: 14,color: Colors.white),))),
     );
   }
-
-
 }

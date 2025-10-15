@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:majorproject/Screen/onBoardingScreen.dart';
 
-import '../DealerAuth/deallerAuth.dart';
-import '../auth/authScreen.dart';
+import '../Authen/PhoneNumberScreen.dart';
+import '../DealerAuth/login_screen.dart';
+import '../DealerAuth/signup_screen.dart';
 
 const Color _kPrimaryColor = Color(0xFF4CAF50);
 const Color _kBackgroundColor = Color(0xff030A0E);
@@ -32,7 +33,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
           },
         ),
         actions: [
-          Image.asset("assets/app_logo.png")
+          Image.asset("assets/app_logo 1.png")
         ],
         centerTitle: true,
       ),
@@ -146,12 +147,12 @@ class _SelectionScreenState extends State<SelectionScreen> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AuthScreen()),
+        MaterialPageRoute(builder: (context) => PhoneNumberScreen()),
       );
     } else if (selectedRole == 'Dealer') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => DealerAuthLogin()),
+        MaterialPageRoute(builder: (context) => SignUpScreen()),
       );
     }
   }

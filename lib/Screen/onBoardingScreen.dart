@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:majorproject/Screen/selectionScreen.dart';
-import 'package:majorproject/auth/authScreen.dart';
 
 import 'IntroScreen.dart';
 
@@ -18,7 +17,7 @@ class OnBoardingScreen extends StatelessWidget {
           },
         ),
         actions: [
-          Image.asset("assets/app_logo.png")
+          Image.asset("assets/app_logo 1.png")
         ],
         centerTitle: true,
       ),

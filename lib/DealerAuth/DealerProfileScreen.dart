@@ -1,138 +1,269 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../HomeScreen/homeScreen.dart';
 import '../Widgets/uiHelper.dart';
 
 
-class DealerProfileScreen extends StatelessWidget {
-  // Controllers for the input fields
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController mobileController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController pinCodeController = TextEditingController();
+class DealerProfileScreen extends StatefulWidget {
+  @override
+  State<DealerProfileScreen> createState() => _DealerProfileScreenState();
+}
 
-  // Define the background color once
-  final Color _kBackgroundColor = const Color(0xff0E363E);
-  final Color _kAccentColor = const Color(0xFF607D8B); // Dark slate blue for icons/borders
+class _DealerProfileScreenState extends State<DealerProfileScreen> {
+
+  String DealerName = '';
+  String DealerId = '';
+  bool isLoading = true;
 
   @override
+  void initState() {
+    super.initState();
+    fetchDealerData();
+  }
+
+  Future<void> fetchDealerData() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      // Fetch data from Firestore (Dealer collection)
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('Dealer')
+          .doc(currentUser.email)
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          DealerName = snapshot['Name'] ?? '*';
+          DealerId = snapshot['UserName'] ?? '@unknown';
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching dealer data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+  @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: _kBackgroundColor,
+      backgroundColor: const Color(0xff030A0E),
       appBar: AppBar(
-        backgroundColor: _kBackgroundColor,
         elevation: 0,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
           },
         ),
-        // Placeholder for the logo action
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Image.asset("assets/app_logo 1.png",),
-          )
-        ],
-        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+      extendBodyBehindAppBar: true,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
+          : SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. User Profile Picture Section ---
-            Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Profile Circle
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _kAccentColor,
-                      border: Border.all(color: Colors.white12, width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 90,
-                      color: Color(0xFF90A4AE), // Lighter blue-gray for the inner icon
-                    ),
-                  ),
-                  // Edit Button Overlay
-                  Positioned(
-                    bottom: -5,
-                    right: -5,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: _kAccentColor, width: 2),
-                      ),
-                      child: Icon(
-                        Icons.edit,
-                        color: _kAccentColor,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
+            // Banner Image
+            Container(
+              height: screenHeight * 0.25,
+              width: double.infinity,
+              child: Image.asset(
+                "assets/profile_banner.png",
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 50),
-
-            // --- 2. Input Fields Section ---
-            // Name Field (Placeholder from image "Your Name")
-            UiHelper.CustomTextField(
-                controller: nameController,
-                text: "Your Name",
-                tohide: false
-            ),
-            const SizedBox(height: 15),
-
-            // Mobile Number (New Field)
-            UiHelper.CustomTextField(
-              controller: mobileController,
-              text: "Mobile Number",
-              tohide: false,
-            ),
-            const SizedBox(height: 15),
-
-            // Full Address (New Field, uses maxLines for a taller field)
-            SizedBox(
-              height: 100, // Taller field for address
-              child: UiHelper.CustomTextField(
-                controller: addressController,
-                text: "Full Address",
-                tohide: false,
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            // Pin Code Field (Placeholder from image "Pin Code")
-            UiHelper.CustomTextField(
-                controller: pinCodeController,
-                text: "Pin Code",
-                tohide: false
-            ),
-            const SizedBox(height: 30),
-
-            // --- 3. Save Button ---
+            // Main Card
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: UiHelper.CustomButton(
-                buttonname: "Save Profile",
-                callback: () {
-
-                },
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xff122129),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: screenWidth * 0.2,
+                          height: screenWidth * 0.2,
+                          decoration: BoxDecoration(
+                            color: const Color(0xffa8c6db),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      DealerName,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.06,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Image.asset(
+                                    'assets/farmer_badge.png',
+                                    width: screenWidth * 0.06,
+                                    height: screenWidth * 0.06,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DealerId,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: screenWidth * 0.04,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Bio',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildBioPoint('Hello! I\'m a dealer', screenWidth),
+                    _buildBioPoint('Providing quality products', screenWidth),
+                    _buildBioPoint('Glad to connect with farmers 👋', screenWidth),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildStatColumn('127', 'Posts', screenWidth),
+                        _buildStatColumn('127', 'Orders', screenWidth),
+                        _buildStatColumn('127', 'Connections', screenWidth),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff4B8B3B),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: screenHeight * 0.015),
+                              child: Text(
+                                'Connect',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          height: screenHeight * 0.065,
+                          width: screenHeight * 0.065,
+                          decoration: BoxDecoration(
+                            color: const Color(0xff4B8B3B),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.chat_bubble_outline,
+                              color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+
+  }
+  Widget _buildBioPoint(String text, double screenWidth) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Icon(Icons.circle, size: screenWidth * 0.02, color: const Color(0xff4B8B3B)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String count, String label, double screenWidth) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth * 0.05,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth * 0.035,
+          ),
+        ),
+      ],
     );
   }
 }
