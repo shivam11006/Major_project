@@ -3,19 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../Screen/IntroScreen.dart';
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 🔹 Fetch Dealer data from Firestore using email as document ID
-  Future<Map<String, dynamic>?> _getDealerData() async {
+  // ✅ Fetch user data (using phone number as document ID)
+  Future<Map<String, dynamic>?> _getUserData() async {
     User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot doc = await _firestore.collection('User').doc(user.email).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
+    // Check if the user is logged in AND has a phone number (which is used as the document ID)
+    if (user != null && user.phoneNumber != null) {
+      try {
+        // Access the 'User' collection and use the user's phone number as the document ID
+        DocumentSnapshot doc = await _firestore
+            .collection('User')
+            .doc(user.phoneNumber) // The document ID is now the phone number
+            .get();
+
+        if (doc.exists) {
+          return doc.data() as Map<String, dynamic>;
+        }
+      } catch (e) {
+        debugPrint("Error fetching user data: $e");
       }
     }
     return null;
@@ -24,52 +35,59 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>?>(
-      future: _getDealerData(),
+      future: _getUserData(),
       builder: (context, snapshot) {
-        String dealerName = "Dealer";
-        String dealerEmail = "dealer@example.com";
+        // Default values before data loads
+        String userName = "";
+        String userPhoneNumber = ""; // Changed from userEmail
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // ⏳ While loading Firestore data
           return Scaffold(
             backgroundColor: Colors.white,
             body: Center(
-              child: CircularProgressIndicator(color: Colors.green),
-            ),
+                child: CircularProgressIndicator(color: Colors.green)),
           );
         }
 
         if (snapshot.hasData && snapshot.data != null) {
-          dealerName = snapshot.data!['Name'] ?? dealerName;
-          dealerEmail = snapshot.data!['Email'] ?? dealerEmail;
+          // Fetch 'name' and 'phone' fields from the document
+          userName = snapshot.data!['name'] ?? userName;
+          userPhoneNumber =
+              snapshot.data!['phone'] ?? userPhoneNumber; // Fetching 'phone'
         }
 
         return Scaffold(
+          backgroundColor: Colors.white,
+
+          // ✅ Drawer showing user info
           drawer: Drawer(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
                 DrawerHeader(
-                  decoration: BoxDecoration(color: Colors.green.shade200),
+                  decoration:
+                  BoxDecoration(color: Colors.green.shade400),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: AssetImage("assets/profile.png"),
+                      const CircleAvatar(
+                        radius: 32,
+                        backgroundImage:
+                        AssetImage("assets/profile.png"),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
-                        dealerName,
-                        style: TextStyle(
+                        userName,
+                        style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        dealerEmail,
-                        style: TextStyle(
+                        // Displaying phone number instead of email
+                        userPhoneNumber,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Colors.white70,
                         ),
@@ -78,25 +96,49 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 ListTile(
-                  leading: Icon(IconlyBroken.home),
-                  title: Text('Home'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
+                  leading: const Icon(IconlyBroken.home),
+                  title: const Text('Home'),
+                  onTap: () => Navigator.pop(context),
                 ),
                 ListTile(
-                  leading: Icon(IconlyBroken.location),
-                  title: Text('Your Address'),
+                  leading: const Icon(IconlyBroken.bag),
+                  title: const Text('Your Orders'),
                   onTap: () {},
                 ),
                 ListTile(
-                  leading: Icon(IconlyBroken.logout),
-                  title: Text('Logout'),
+                  leading: const Icon(IconlyBroken.location),
+                  title: const Text('Your Address'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(IconlyBroken.bag),
+                  title: const Text('Sell Your Crops & Vegetables'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(IconlyBroken.location),
+                  title: const Text('Find Nearest Seller'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.contact_emergency),
+                  title: const Text('Contact Us'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.calculate),
+                  title: const Text('Budget calculator'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(IconlyBroken.logout),
+                  title: const Text('Logout'),
                   onTap: () async {
                     await _auth.signOut();
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (_) => IntroScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => IntroScreen()),
                           (route) => false,
                     );
                   },
@@ -105,43 +147,36 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // 🔹 AppBar now dynamically shows dealer's name
+          // ✅ AppBar showing name only
           appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
             centerTitle: false,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Hi $dealerName 👋",
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  "Enjoy our services",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey[600]),
-                ),
-              ],
+            title: Text(
+              "Hi $userName 👋",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 20,
+              ),
             ),
             actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: IconButton.filledTonal(
-                  onPressed: () {},
-                  icon: Icon(IconlyBroken.notification),
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  IconlyBroken.notification,
+                  color: Colors.black,
                 ),
               ),
+              const SizedBox(width: 8),
             ],
           ),
 
-          // 🔹 Body content
+          // ✅ Body content
           body: ListView(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             children: [
+              // Search bar
               Padding(
                 padding: const EdgeInsets.only(bottom: 15),
                 child: Row(
@@ -153,9 +188,10 @@ class HomeScreen extends StatelessWidget {
                           isDense: true,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(99),
-                            borderSide: BorderSide(color: Colors.green.shade300),
+                            borderSide: BorderSide(
+                                color: Colors.green.shade300),
                           ),
-                          prefixIcon: Icon(IconlyBroken.search),
+                          prefixIcon: const Icon(IconlyBroken.search),
                         ),
                       ),
                     ),
@@ -163,12 +199,14 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: IconButton.filled(
                         onPressed: () {},
-                        icon: Icon(IconlyLight.filter),
+                        icon: const Icon(IconlyLight.filter),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Banner
               SizedBox(
                 height: 170,
                 child: Card(
@@ -181,7 +219,8 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
@@ -194,10 +233,11 @@ class HomeScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Text("Get Free support from our customer services"),
+                              const Text(
+                                  "Get free support from our customer service"),
                               FilledButton(
                                 onPressed: () {},
-                                child: Text("Call Us"),
+                                child: const Text("Call Us"),
                               ),
                             ],
                           ),
@@ -211,16 +251,21 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 20),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Featured Product"),
+                  const Text("Featured Products",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
                   TextButton(
                     onPressed: () {},
-                    child: Text("See all"),
+                    child: const Text("See all"),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         );

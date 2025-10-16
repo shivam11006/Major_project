@@ -11,36 +11,36 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String DealerName = '';
-  String DealerId = '';
+  String username = '';
+  String phoneNumber = '';
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchDealerData();
+    fetchUserData();
   }
 
-  Future<void> fetchDealerData() async {
+  Future<void> fetchUserData() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
+      if (currentUser == null || currentUser.phoneNumber == null) {
         setState(() {
           isLoading = false;
         });
         return;
       }
 
-      // Fetch data from Firestore (Dealer collection)
+      // Fetch data from Firestore (User collection using phone number as document ID)
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('Dealer')
-          .doc(currentUser.email)
+          .collection('User')
+          .doc(currentUser.phoneNumber)
           .get();
 
       if (snapshot.exists) {
         setState(() {
-          DealerName = snapshot['Name'] ?? '*';
-          DealerId = snapshot['UserName'] ?? '@unknown';
+          username = snapshot['name'] ?? '';
+          phoneNumber = snapshot['phone'] ?? '';
           isLoading = false;
         });
       } else {
@@ -49,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      print('Error fetching dealer data: $e');
+      print('Error fetching user data: $e');
       setState(() {
         isLoading = false;
       });
@@ -94,7 +94,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             // Main Card
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 16),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -125,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      DealerName,
+                                      username,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: screenWidth * 0.06,
@@ -144,10 +145,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DealerId,
+                                phoneNumber,
                                 style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: screenWidth * 0.04,
+                                  color: Colors.white70,
+                                  fontSize: screenWidth * 0.045,
                                 ),
                               ),
                             ],
@@ -165,16 +166,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildBioPoint('Hello! I\'m a dealer', screenWidth),
-                    _buildBioPoint('Providing quality products', screenWidth),
-                    _buildBioPoint('Glad to connect with farmers 👋', screenWidth),
+                    _buildBioPoint('Hello! I\'m a farmer', screenWidth),
+                    _buildBioPoint(
+                        'Working with quality crops', screenWidth),
+                    _buildBioPoint('Glad to connect with dealers 👋',
+                        screenWidth),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildStatColumn('127', 'Posts', screenWidth),
                         _buildStatColumn('127', 'Orders', screenWidth),
-                        _buildStatColumn('127', 'Connections', screenWidth),
+                        _buildStatColumn(
+                            '127', 'Connections', screenWidth),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -231,12 +235,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(Icons.circle, size: screenWidth * 0.02, color: const Color(0xff4B8B3B)),
+          Icon(Icons.circle,
+              size: screenWidth * 0.02, color: const Color(0xff4B8B3B)),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
               text,
-              style: TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
+              style:
+              TextStyle(color: Colors.white, fontSize: screenWidth * 0.04),
             ),
           ),
         ],

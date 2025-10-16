@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.mulishTextTheme(),
       ),
-      home: DearHomeScreen(),
+      home: SplashScreen(),
     );
   }
 }

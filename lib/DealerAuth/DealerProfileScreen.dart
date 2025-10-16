@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../HomeScreen/homeScreen.dart';
-import '../Widgets/uiHelper.dart';
+import '../Widgets/uiHelper.dart'; // Assuming this import is necessary for other parts of your app
 
 
 class DealerProfileScreen extends StatefulWidget {
@@ -13,8 +13,8 @@ class DealerProfileScreen extends StatefulWidget {
 
 class _DealerProfileScreenState extends State<DealerProfileScreen> {
 
-  String DealerName = '';
-  String DealerId = '';
+  String dealerName = '';
+  String dealerId = ''; // Changed variable name for consistency
   bool isLoading = true;
 
   @override
@@ -23,32 +23,40 @@ class _DealerProfileScreenState extends State<DealerProfileScreen> {
     fetchDealerData();
   }
 
+  // ✅ MODIFIED: Function to fetch Dealer data using email query
   Future<void> fetchDealerData() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
+      if (currentUser == null || currentUser.email == null) {
         setState(() {
           isLoading = false;
         });
         return;
       }
 
-      // Fetch data from Firestore (Dealer collection)
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+      // 1. Query the 'Dealer' collection where the 'Email' field matches the current user's email.
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Dealer')
-          .doc(currentUser.email)
+          .where('Email', isEqualTo: currentUser.email)
+          .limit(1) // Assuming one unique dealer per email
           .get();
 
-      if (snapshot.exists) {
+      if (querySnapshot.docs.isNotEmpty) {
+        // 2. Get the first matching document
+        DocumentSnapshot doc = querySnapshot.docs.first;
+
         setState(() {
-          DealerName = snapshot['Name'] ?? '*';
-          DealerId = snapshot['UserName'] ?? '@unknown';
+          // 3. Retrieve 'Name' and 'UserName' based on the database structure
+          dealerName = doc['Name'] ?? '*';
+          dealerId = doc['UserName'] ?? '@unknown';
           isLoading = false;
         });
       } else {
+        // No dealer found with that email
         setState(() {
           isLoading = false;
         });
+        print('Dealer document not found for email: ${currentUser.email}');
       }
     } catch (e) {
       print('Error fetching dealer data: $e');
@@ -57,6 +65,7 @@ class _DealerProfileScreenState extends State<DealerProfileScreen> {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -70,6 +79,8 @@ class _DealerProfileScreenState extends State<DealerProfileScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
+            // NOTE: Consider using Navigator.pop(context) if this screen is pushed
+            // instead of using pushReplacement back to HomeScreen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -126,7 +137,8 @@ class _DealerProfileScreenState extends State<DealerProfileScreen> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      DealerName,
+                                      // Display fetched Name
+                                      dealerName,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: screenWidth * 0.06,
@@ -145,7 +157,8 @@ class _DealerProfileScreenState extends State<DealerProfileScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DealerId,
+                                // Display fetched UserName (as DealerId)
+                                dealerId,
                                 style: TextStyle(
                                   color: Colors.grey,
                                   fontSize: screenWidth * 0.04,

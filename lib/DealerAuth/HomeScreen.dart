@@ -5,18 +5,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 
 import '../Screen/IntroScreen.dart';
+import 'DealerProfileScreen.dart';
 
 class DearHomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 🔹 Fetch Dealer data from Firestore using email as document ID
+  // 🚀 Modified: Fetch Dealer data using email to query the collection
   Future<Map<String, dynamic>?> _getDealerData() async {
     User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot doc = await _firestore.collection('Dealer').doc(user.email).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
+    if (user != null && user.email != null) {
+      try {
+        // Query the 'Dealer' collection where the 'Email' field matches the current user's email.
+        QuerySnapshot querySnapshot = await _firestore
+            .collection('Dealer')
+            .where('Email', isEqualTo: user.email)
+            .limit(1) // Assuming there is only one dealer per email
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          // If a document is found, return its data.
+          return querySnapshot.docs.first.data() as Map<String, dynamic>;
+        }
+      } catch (e) {
+        debugPrint("Error fetching dealer data: $e");
       }
     }
     return null;
@@ -27,8 +39,11 @@ class DearHomeScreen extends StatelessWidget {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getDealerData(),
       builder: (context, snapshot) {
+        // Updated defaults for name and number
         String dealerName = "Dealer";
+        String dealerPhoneNumber = ""; // New variable for phone number
         String dealerEmail = "dealer@example.com";
+        String dealerImage = "assets/profile.png";
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           // ⏳ While loading Firestore data
@@ -41,8 +56,11 @@ class DearHomeScreen extends StatelessWidget {
         }
 
         if (snapshot.hasData && snapshot.data != null) {
+          // Fields are retrieved based on your image: 'Name' (capital N) and 'Number' (capital N)
           dealerName = snapshot.data!['Name'] ?? dealerName;
           dealerEmail = snapshot.data!['Email'] ?? dealerEmail;
+          dealerPhoneNumber = snapshot.data!['Number'] ?? ""; // Fetching 'Number'
+          // dealerImage = snapshot.data!['img'] ?? dealerImage; // Assuming 'img' is correct if it exists
         }
 
         return Scaffold(
@@ -97,8 +115,9 @@ class DearHomeScreen extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 4),
+                            // Display the phone number
                             Text(
-                              dealerEmail,
+                              dealerPhoneNumber.isNotEmpty ? dealerPhoneNumber : dealerEmail,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withOpacity(0.9),
@@ -126,10 +145,36 @@ class DearHomeScreen extends StatelessWidget {
                       ),
                       _buildDrawerTile(
                         icon: IconlyBroken.location,
+                        title: 'Your Orders',
+                        onTap: () {},
+                      ),
+                      _buildDrawerTile(
+                        icon: IconlyBroken.location,
                         title: 'Your Address',
                         onTap: () {},
                       ),
-                      Divider(indent: 20, endIndent: 20, height: 24),
+                      _buildDrawerTile(
+                        icon: IconlyBroken.location,
+                        title: 'Buy Crops & Vegetables',
+                        onTap: () {},
+                      ),
+                      _buildDrawerTile(
+                        icon: IconlyBroken.location,
+                        title: 'Find the nearest Farmer (Sell & Buy)',
+                        onTap: () {},
+                      ),
+                      _buildDrawerTile(
+                        icon: IconlyBroken.location,
+                        title: 'Budget Calculator',
+                        onTap: () {},
+                      ),
+                      _buildDrawerTile(
+                        icon: IconlyBroken.location,
+                        title: 'Your Profile',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => DealerProfileScreen()));
+                        },
+                      ),
                       _buildDrawerTile(
                         icon: IconlyBroken.logout,
                         title: 'Logout',

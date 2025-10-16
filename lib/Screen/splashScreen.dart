@@ -4,8 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../BottomNavigation/BottomNavigation.dart';
-import '../DealerAuth/HomeScreen.dart';
-import '../DealerAuth/HomeScreenDealer.dart';
+import '../DealerAuth/HomeScreenDealer.dart'; // AdminPanel screen for Dealer
 import 'IntroScreen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,13 +22,15 @@ class _SplashScreenState extends State<SplashScreen> {
     _checkUser();
   }
 
-  // ✅ Check if logged in and determine role (Farmer or Dealer)
+  /// ✅ Checks whether user/dealer is logged in and routes accordingly
   Future<void> _checkUser() async {
     await Future.delayed(const Duration(seconds: 3)); // Splash delay
+
     User? currentUser = _auth.currentUser;
 
+    // 🚫 If no user logged in → go to IntroScreen
     if (currentUser == null) {
-      // 🚫 Not logged in → IntroScreen
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => IntroScreen()),
@@ -38,40 +39,58 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     try {
-      // Check in Dealer collection first
-      DocumentSnapshot dealerDoc =
-      await _firestore.collection('Dealer').doc(currentUser.email).get();
+      String? userEmail = currentUser.email;
+      String? userPhone = currentUser.phoneNumber;
 
-      if (dealerDoc.exists) {
-        // 🧑‍💼 Dealer found
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminPanel()),
-        );
-        return;
+      // 1. Check Dealer Role (MUST use query on 'Email' field due to auto doc IDs)
+      if (userEmail != null) {
+        QuerySnapshot dealerQuery = await _firestore
+            .collection('Dealer')
+            .where('Email', isEqualTo: userEmail)
+            .limit(1)
+            .get();
+
+        if (dealerQuery.docs.isNotEmpty) {
+          // Dealer found → navigate to Dealer Home Screen (AdminPanel)
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminPanel()),
+          );
+          return;
+        }
       }
 
-      // Otherwise, check in User (Farmer) collection
-      DocumentSnapshot userDoc =
-      await _firestore.collection('User').doc(currentUser.email).get();
+      // 2. Check User Role (Assuming User document ID is the phone number, based on previous context)
+      if (userPhone != null) {
+        DocumentSnapshot userDoc = await _firestore
+            .collection('User')
+            .doc(userPhone) // Document ID is the phone number
+            .get();
 
-      if (userDoc.exists) {
-        // 👨‍🌾 Farmer found
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => BottomNavigation()),
-        );
-        return;
+        if (userDoc.exists) {
+          // User found → navigate to Bottom Navigation
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => BottomNavigation()),
+          );
+          return;
+        }
       }
 
-      // If not found in either → treat as logged out
+      // 🚫 If user is logged in but not found in either Dealer or User collection
+      // (or if required identifiers like email/phone are missing) → log out and go to IntroScreen
       await _auth.signOut();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => IntroScreen()),
       );
     } catch (e) {
-      print("Error checking user role: $e");
+      debugPrint("Error checking user role: $e");
+      // Fallback on error
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => IntroScreen()),
@@ -84,10 +103,20 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Image.asset(
-          "assets/app_logo.png", // Your app logo
-          height: 150,
-          fit: BoxFit.contain,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              "assets/app_logo.png",
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(
+              color: Colors.green,
+              strokeWidth: 2.5,
+            ),
+          ],
         ),
       ),
     );

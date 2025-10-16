@@ -17,7 +17,7 @@ class _AdminPanelState extends State<AdminPanel> {
   final screens = [
     DearHomeScreen(),
     PostScreen(),
-    ProfileScreen()
+    DealerProfileScreen()
   ];
 
   final items = <Widget>[
