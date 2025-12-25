@@ -1,11 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'Authen/PhoneNumberScreen.dart';
-import 'DealerAuth/HomeScreen.dart';
-import 'DealerAuth/signup_screen.dart';
-import 'Screen/splashScreen.dart';
+import 'package:majorproject/Screen/splashScreen.dart';
 import 'firebase_options.dart';
+import 'Screen/onBoardingScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,15 +19,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Agri Shakti',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-        textTheme: GoogleFonts.mulishTextTheme(),
+    return ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Agri Shakti',
+        theme: ThemeData(
+          colorScheme:  ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
+          textTheme: GoogleFonts.mulishTextTheme(),
+        ),
+        home:  SplashScreen(),
       ),
-      home: SplashScreen(),
     );
   }
 }

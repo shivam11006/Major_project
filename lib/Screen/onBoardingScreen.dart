@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:majorproject/Screen/selectionScreen.dart';
+import 'package:majorproject/Screen/IntroScreen.dart';
+import '../Services/TranslationService.dart';
 
-import 'IntroScreen.dart';
+class OnBoardingScreen extends ConsumerStatefulWidget {
+  const OnBoardingScreen({Key? key}) : super(key: key);
 
-class OnBoardingScreen extends StatelessWidget {
+  @override
+  ConsumerState<OnBoardingScreen> createState() => _OnBoardingScreenState();
+}
+
+class _OnBoardingScreenState extends ConsumerState<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
+    final currentLang = ref.watch(languageProvider);
+
+    // Helper to get text
+    String tr(String key) => AppLocalizations.of(currentLang, key);
+
     return Scaffold(
       backgroundColor: const Color(0xff030A0E),
       appBar: AppBar(
@@ -13,46 +26,40 @@ class OnBoardingScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context)=> IntroScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => IntroScreen()),
+            );
           },
         ),
-        actions: [
-          Image.asset("assets/app_logo 1.png")
-        ],
+        actions: [Image.asset("assets/app_logo 1.png")],
         centerTitle: true,
       ),
       body: Column(
         children: [
-          // Illustration section
           Expanded(
             flex: 2,
-            child: Container(
-              alignment: Alignment.center,
-              child: Image.asset(
-                'assets/choose_language_img.png', // Replace with your image asset path
-                fit: BoxFit.contain,
-              ),
-            ),
+            child: Center(child: Image.asset('assets/choose_language_img.png')),
           ),
-          // Language selection and next button section
           Expanded(
             flex: 1,
-            child: Container(
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Choose Your Language',
-                    style: TextStyle(
+                  Text(
+                    tr('choose_language'),
+                    style: const TextStyle(
                       color: Color(0xffAECCDD),
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField(
+                  DropdownButtonFormField<String>(
                     dropdownColor: const Color(0xff030A0E),
+                    value: currentLang,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white.withOpacity(0.1),
@@ -61,37 +68,70 @@ class OnBoardingScreen extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
-                    value: 'en-In',
                     items: const [
                       DropdownMenuItem(
-                        value: 'en-In',
+                        value: 'en',
                         child: Text(
-                          'en-In',
+                          'English',
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
                       DropdownMenuItem(
-                        value: 'hi-In',
+                        value: 'hi',
                         child: Text(
-                          'hi-In',
+                          'हिन्दी',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'te',
+                        child: Text(
+                          'తెలుగు',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'ta',
+                        child: Text(
+                          'தமிழ்',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'or',
+                        child: Text(
+                          'ଓଡ଼ିଆ',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'ur',
+                        child: Text(
+                          'اردو',
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],
-                    onChanged: (value) {},
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(languageProvider.notifier)
+                            .changeLanguage(value);
+                      }
+                    },
                   ),
                   const Spacer(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Page indicator dots
                       _buildPageIndicator(true),
                       _buildPageIndicator(true),
                       _buildPageIndicator(false),
                       _buildPageIndicator(false),
-
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -99,7 +139,10 @@ class OnBoardingScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> SelectionScreen()));
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => SelectionScreen()),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xff57B427),
@@ -108,9 +151,9 @@ class OnBoardingScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Next',
-                        style: TextStyle(
+                      child: Text(
+                        tr('next'),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -128,7 +171,6 @@ class OnBoardingScreen extends StatelessWidget {
     );
   }
 
-  // Helper method for the page indicator dots
   Widget _buildPageIndicator(bool isActive) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),

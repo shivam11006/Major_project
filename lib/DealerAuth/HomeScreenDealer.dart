@@ -1,7 +1,5 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import '../HomeScreen/homeScreen.dart';
-import '../Profile/profile.dart';
 import 'DealerProfileScreen.dart';
 import 'HomeScreen.dart';
 import 'PostScreen.dart';
@@ -12,35 +10,36 @@ class AdminPanel extends StatefulWidget {
 }
 
 class _AdminPanelState extends State<AdminPanel> {
-  int index = 1;
+  int _selectedIndex = 0;
 
   final screens = [
-    DearHomeScreen(),
+    DearHomeScreen(), // ✅ Make sure this class exists
     PostScreen(),
-    DealerProfileScreen()
+    DealerProfileScreen(),
   ];
 
   final items = <Widget>[
     Icon(Icons.home, size: 30),
     Icon(Icons.add_box, size: 30),
-    Icon(Icons.person, size: 30,)
+    Icon(Icons.person, size: 30),
   ];
-
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Scaffold(
-      body: screens[index],
       extendBody: true,
-      backgroundColor: Colors.blueAccent,
+      body: screens[_selectedIndex], // ✅ Display selected screen
       bottomNavigationBar: CurvedNavigationBar(
-        // buttonBackgroundColor: Colors.green,
         backgroundColor: Colors.transparent,
-        height: 70,
-        index: index,
+        color: Colors.white,
+        height: 60,
+        index: _selectedIndex,
         items: items,
-        onTap: (index) => setState(() => this.index = index),
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }

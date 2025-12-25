@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:majorproject/Screen/onBoardingScreen.dart';
-
 import '../Authen/PhoneNumberScreen.dart';
-import '../DealerAuth/login_screen.dart';
 import '../DealerAuth/signup_screen.dart';
+import '../Services/TranslationService.dart';
 
 const Color _kPrimaryColor = Color(0xFF4CAF50);
 const Color _kBackgroundColor = Color(0xff030A0E);
 const Color _kAccentColor = Color(0xffAECCDD);
 const Color _kOnPrimaryColor = Colors.white;
 
-class SelectionScreen extends StatefulWidget {
+class SelectionScreen extends ConsumerStatefulWidget {
   @override
   _SelectionScreenState createState() => _SelectionScreenState();
 }
 
-class _SelectionScreenState extends State<SelectionScreen> {
+class _SelectionScreenState extends ConsumerState<SelectionScreen> {
   String? selectedRole;
 
   @override
   Widget build(BuildContext context) {
     final bool isButtonEnabled = selectedRole != null;
+    final currentLang = ref.watch(languageProvider);
+    String tr(String key) => AppLocalizations.of(currentLang, key);
 
     return Scaffold(
       backgroundColor: const Color(0xff030A0E),
@@ -29,18 +31,18 @@ class _SelectionScreenState extends State<SelectionScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context)=> OnBoardingScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => OnBoardingScreen()),
+            );
           },
         ),
-        actions: [
-          Image.asset("assets/app_logo 1.png")
-        ],
+        actions: [Image.asset("assets/app_logo 1.png")],
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
-
             Expanded(
               flex: 2,
               child: Container(
@@ -53,9 +55,9 @@ class _SelectionScreenState extends State<SelectionScreen> {
             ),
             // --- Role selection title ---
             const SizedBox(height: 16),
-            const Text(
-              "Choose Your Role",
-              style: TextStyle(
+            Text(
+              tr('choose_role'),
+              style: const TextStyle(
                 fontSize: 26,
                 color: Color(0xffAECCDD),
                 fontWeight: FontWeight.bold,
@@ -63,12 +65,9 @@ class _SelectionScreenState extends State<SelectionScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Text(
-              "Select the role that best describes you",
-              style: TextStyle(
-                color: _kAccentColor,
-                fontSize: 16,
-              ),
+            Text(
+              tr('role_desc'),
+              style: const TextStyle(color: _kAccentColor, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -94,14 +93,14 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 selectedBorderColor: _kPrimaryColor,
                 borderWidth: 2,
                 constraints: const BoxConstraints(minHeight: 60),
-                children: const <Widget>[
+                children: <Widget>[
                   RoleToggleButton(
                     icon: Icons.agriculture_outlined,
-                    text: 'Farmer',
+                    text: tr('farmer'),
                   ),
                   RoleToggleButton(
                     icon: Icons.storefront_outlined,
-                    text: 'Dealer',
+                    text: tr('dealer'),
                   ),
                 ],
               ),
@@ -112,29 +111,29 @@ class _SelectionScreenState extends State<SelectionScreen> {
             // --- Next Button ---
             Container(
               width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isButtonEnabled ? _handleNext : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kPrimaryColor,
-                    disabledBackgroundColor: _kPrimaryColor.withOpacity(0.5),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 5,
+              child: ElevatedButton(
+                onPressed: isButtonEnabled ? _handleNext : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kPrimaryColor,
+                  disabledBackgroundColor: _kPrimaryColor.withOpacity(0.5),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    "Next",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isButtonEnabled
-                          ? _kOnPrimaryColor
-                          : _kOnPrimaryColor.withOpacity(0.7),
-                    ),
+                  elevation: 5,
+                ),
+                child: Text(
+                  tr('next'),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isButtonEnabled
+                        ? _kOnPrimaryColor
+                        : _kOnPrimaryColor.withOpacity(0.7),
                   ),
                 ),
               ),
+            ),
             const SizedBox(height: 24),
           ],
         ),
@@ -144,7 +143,6 @@ class _SelectionScreenState extends State<SelectionScreen> {
 
   void _handleNext() {
     if (selectedRole == 'Farmer') {
-
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => PhoneNumberScreen()),
@@ -162,10 +160,7 @@ class RoleToggleButton extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const RoleToggleButton({
-    required this.icon,
-    required this.text,
-  });
+  const RoleToggleButton({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {

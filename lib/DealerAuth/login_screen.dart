@@ -1,24 +1,31 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:majorproject/DealerAuth/signup_screen.dart';
 import '../BottomNavigation/BottomNavigation.dart';
 import '../HomeScreen/homeScreen.dart';
+import '../Services/TranslationService.dart';
+import 'package:majorproject/utils.dart';
 import 'HomeScreenDealer.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool isPasswordHide = true;
 
   Future<void> _login() async {
+    final currentLang = ref.read(languageProvider);
+    String tr(String key) => AppLocalizations.of(currentLang, key);
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -32,8 +39,11 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (context) => AdminPanel()),
       );
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message ?? 'Login failed')));
+      showAppSnackbar(
+        context: context,
+        type: SnackbarType.error,
+        description: e.message ?? tr('login_failed'),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -41,6 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLang = ref.watch(languageProvider);
+    String tr(String key) => AppLocalizations.of(currentLang, key);
+
     return Scaffold(
       backgroundColor: const Color(0xFF002E2E), // Dark green background
       body: Center(
@@ -53,9 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 // App Title
                 Image.asset("assets/app_logo.png"),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
                 const SizedBox(height: 50),
 
                 // Email Field
@@ -63,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: "Email",
+                    labelText: tr('email'),
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: const Color(0xFF355858),
@@ -77,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null ||
                         value.isEmpty ||
                         !value.contains('@')) {
-                      return 'Enter a valid email';
+                      return tr('enter_valid_email');
                     }
                     return null;
                   },
@@ -89,19 +100,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: "Password",
+                    labelText: tr('password'),
                     labelStyle: const TextStyle(color: Colors.white70),
                     filled: true,
                     fillColor: const Color(0xFF355858),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isPasswordHide = !isPasswordHide;
+                        });
+                      },
+                      icon: Icon(
+                        isPasswordHide
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: isPasswordHide,
                   validator: (value) {
                     if (value == null || value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return tr('min_6_chars');
                     }
                     return null;
                   },
@@ -116,9 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       // TODO: implement forgot password navigation
                     },
-                    child: const Text(
-                      "Forgot password?",
-                      style: TextStyle(color: Colors.greenAccent),
+                    child: Text(
+                      tr('forgot_password'),
+                      style: const TextStyle(color: Colors.greenAccent),
                     ),
                   ),
                 ),
@@ -129,54 +150,53 @@ class _LoginScreenState extends State<LoginScreen> {
                 _isLoading
                     ? const CircularProgressIndicator(color: Colors.greenAccent)
                     : SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.greenAccent.shade400,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.greenAccent.shade400,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: _login,
+                          child: Text(
+                            tr('log_in'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    onPressed: _login,
-                    child: const Text(
-                      "Log In",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18),
-                    ),
-                  ),
-                ),
 
                 const SizedBox(height: 20),
 
                 // OR divider
-                const Text(
-                  "OR",
-                  style: TextStyle(color: Colors.white70),
-                ),
+                Text(tr('or'), style: const TextStyle(color: Colors.white70)),
                 const SizedBox(height: 10),
 
                 // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: Colors.white70),
+                    Text(
+                      tr('dont_have_account'),
+                      style: const TextStyle(color: Colors.white70),
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const SignUpScreen()),
+                            builder: (context) => const SignUpScreen(),
+                          ),
                         );
                       },
-                      child: const Text(
-                        "Sign Up",
-                        style: TextStyle(
+                      child: Text(
+                        tr('sign_up'),
+                        style: const TextStyle(
                           color: Colors.greenAccent,
                           fontWeight: FontWeight.bold,
                         ),

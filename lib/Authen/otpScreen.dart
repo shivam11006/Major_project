@@ -1,26 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../BottomNavigation/BottomNavigation.dart';
 import '../Profile/RegisterationProfile.dart';
+import '../Services/TranslationService.dart';
+import 'package:majorproject/utils.dart';
 import 'PhoneNumberScreen.dart';
 
-class OtpScreen extends StatefulWidget {
+class OtpScreen extends ConsumerStatefulWidget {
   final String verificationId;
   final String phoneNumber;
 
   const OtpScreen({
+    Key? key,
     required this.verificationId,
     required this.phoneNumber,
-    required bool isExistingUser,
-  });
+  }) : super(key: key);
 
   @override
-  State<OtpScreen> createState() => _OtpScreenState();
+  ConsumerState<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> {
+class _OtpScreenState extends ConsumerState<OtpScreen> {
   final TextEditingController _otpController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -29,8 +32,13 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _verifyOtp() async {
     if (_otpController.text.trim().length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter a valid 6-digit OTP")),
+      showAppSnackbar(
+        context: context,
+        type: SnackbarType.error,
+        description: AppLocalizations.of(
+          ref.read(languageProvider),
+          'enter_valid_otp',
+        ),
       );
       return;
     }
@@ -45,8 +53,10 @@ class _OtpScreenState extends State<OtpScreen> {
 
       await _auth.signInWithCredential(credential);
 
-      final userDoc =
-      await _firestore.collection('User').doc(widget.phoneNumber).get();
+      final userDoc = await _firestore
+          .collection('User')
+          .doc(widget.phoneNumber)
+          .get();
 
       setState(() => _verifying = false);
 
@@ -54,30 +64,40 @@ class _OtpScreenState extends State<OtpScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => BottomNavigation()),
-              (route) => false,
+          (route) => false,
         );
       } else {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                RegistrationScreen(phoneNumber: widget.phoneNumber),
+            builder: (_) => RegistrationScreen(phoneNumber: widget.phoneNumber),
           ),
         );
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _verifying = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Invalid OTP: ${e.message}")));
+      showAppSnackbar(
+        context: context,
+        type: SnackbarType.error,
+        description:
+            "${AppLocalizations.of(ref.read(languageProvider), 'invalid_otp')}: ${e.message}",
+      );
     } catch (e) {
       setState(() => _verifying = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      showAppSnackbar(
+        context: context,
+        type: SnackbarType.error,
+        description:
+            "${AppLocalizations.of(ref.read(languageProvider), 'error')}: $e",
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentLang = ref.watch(languageProvider);
+    String tr(String key) => AppLocalizations.of(currentLang, key);
+
     return Scaffold(
       backgroundColor: const Color(0xff030A0E),
       resizeToAvoidBottomInset: true, // ✅ Prevent keyboard overlap
@@ -96,10 +116,7 @@ class _OtpScreenState extends State<OtpScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: Image.asset(
-              "assets/app_logo 1.png",
-              height: 35,
-            ),
+            child: Image.asset("assets/app_logo 1.png", height: 35),
           ),
         ],
         centerTitle: true,
@@ -119,8 +136,8 @@ class _OtpScreenState extends State<OtpScreen> {
                 const SizedBox(height: 30),
 
                 Text(
-                  "Enter the 6-digit code sent to",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  tr('enter_code_sent_to'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 5),
@@ -146,17 +163,20 @@ class _OtpScreenState extends State<OtpScreen> {
                     controller: _otpController,
                     maxLength: 6,
                     keyboardType: TextInputType.number,
-                    style:
-                    const TextStyle(color: Colors.white, letterSpacing: 8),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      letterSpacing: 8,
+                    ),
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(
                       counterText: "",
                       border: InputBorder.none,
                       hintText: "------",
                       hintStyle: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 22,
-                          letterSpacing: 10),
+                        color: Colors.white54,
+                        fontSize: 22,
+                        letterSpacing: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -177,11 +197,14 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                     child: _verifying
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                      "Verify & Continue",
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
-                    ),
+                        : Text(
+                            tr('verify_continue'),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
 
@@ -190,9 +213,9 @@ class _OtpScreenState extends State<OtpScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text(
-                    "Edit Phone Number",
-                    style: TextStyle(color: Colors.white70),
+                  child: Text(
+                    tr('edit_phone_number'),
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ),
 

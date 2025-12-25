@@ -1,17 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../BottomNavigation/BottomNavigation.dart';
 import '../Screen/onBoardingScreen.dart';
+import 'package:majorproject/utils.dart';
+import '../Services/TranslationService.dart';
 import 'otpScreen.dart';
 
-class PhoneNumberScreen extends StatefulWidget {
+class PhoneNumberScreen extends ConsumerStatefulWidget {
   @override
-  State<PhoneNumberScreen> createState() => _PhoneNumberScreenState();
+  ConsumerState<PhoneNumberScreen> createState() => _PhoneNumberScreenState();
 }
 
-class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
+class _PhoneNumberScreenState extends ConsumerState<PhoneNumberScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _phoneController = TextEditingController();
   bool _loading = false;
@@ -21,6 +24,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   // ✅ PHONE AUTH FLOW (OTP)
   void _verifyPhone() async {
+    // final currentLang = ref.read(languageProvider);
+    // However, snackbars should ideally use the helper from build context or similar.
+    // We will define tr() inside methods or pass it around. For simplified usage, we can fetch it again or store in a variable if methods need it.
+    // Actually, `AppLocalizations.of(ref.read(languageProvider), key)` is fine.
+
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
@@ -33,8 +41,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       },
       verificationFailed: (FirebaseAuthException e) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Verification failed: ${e.message}")),
+        showAppSnackbar(
+          context: context,
+          type: SnackbarType.error,
+          description:
+              "${AppLocalizations.of(ref.read(languageProvider), 'verification_failed')}: ${e.message}",
         );
       },
       codeSent: (String verificationId, int? resendToken) async {
@@ -47,11 +58,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OtpScreen(
-                verificationId: verificationId,
-                phoneNumber: phone,
-                isExistingUser: true,
-              ),
+              builder: (_) =>
+                  OtpScreen(verificationId: verificationId, phoneNumber: phone),
             ),
           );
         } else {
@@ -59,11 +67,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => OtpScreen(
-                verificationId: verificationId,
-                phoneNumber: phone,
-                isExistingUser: false,
-              ),
+              builder: (_) =>
+                  OtpScreen(verificationId: verificationId, phoneNumber: phone),
             ),
           );
         }
@@ -74,6 +79,9 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLang = ref.watch(languageProvider);
+    String tr(String key) => AppLocalizations.of(currentLang, key);
+
     return Scaffold(
       backgroundColor: const Color(0xff030A0E),
       appBar: AppBar(
@@ -106,9 +114,13 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: const Text(
-                        "Your Phone Number",
-                        style: TextStyle(color: Color(0xffAECCDD), fontSize: 16,fontWeight: FontWeight.bold),
+                      child: Text(
+                        tr('your_phone_number'),
+                        style: const TextStyle(
+                          color: Color(0xffAECCDD),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -122,23 +134,27 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                       child: Row(
                         children: [
                           const SizedBox(width: 10),
-                          const Text("+91",
-                              style:
-                              TextStyle(color: Colors.white, fontSize: 16)),
+                          const Text(
+                            "+91",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
                               style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
-                                hintText: "Phone Number",
-                                hintStyle: TextStyle(color: Color(0xffAECCDD)),
+                                hintText: tr('phone_number_hint'),
+                                hintStyle: const TextStyle(
+                                  color: Color(0xffAECCDD),
+                                ),
                               ),
                               validator: (value) {
-                                if (value == null || value.trim().length != 10) {
-                                  return "Enter valid 10-digit number";
+                                if (value == null ||
+                                    value.trim().length != 10) {
+                                  return tr('enter_valid_number');
                                 }
                                 return null;
                               },
@@ -183,14 +199,14 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                 ),
                 child: _loading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  "Next",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white
-                  ),
-                ),
+                    : Text(
+                        tr('next'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ),
